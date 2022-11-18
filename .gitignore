@@ -1,0 +1,6 @@
+data
+.env
+git_web_ml
+.vscode
+__pycache__
+.ipynb_checkpoints

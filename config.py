@@ -1,0 +1,14 @@
+DATA_PATH = './data/'
+REF_DATA_PATH = './git_web_ml/'
+REF_TARGET_FILE = f'{REF_DATA_PATH}musae_git_target.csv'
+USERS_FILE = f'{DATA_PATH}users.json'
+USER_RELATIONS_FILE = f'{DATA_PATH}user_relations.csv'
+USER_ORIG_RELATIONS_FILE = f'{DATA_PATH}user_orig_relations.csv'
+USER_REPOS_FILE = f'{DATA_PATH}user_repos.json'
+USER_LABELS_FILE = f'{DATA_PATH}user_labels.csv'
+USER_FEATURES_FILE = f'{DATA_PATH}user_features.csv'
+FEATURE_NAMES_FILE = f'{DATA_PATH}feat_names.pkl'
+USER_REPOS_MAX = 5
+RATE_LIMIT_WAIT = 300
+N_LANGS = 50
+N_TOPICS = 150
