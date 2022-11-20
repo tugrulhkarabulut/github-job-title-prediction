@@ -4,10 +4,12 @@ import json
 import subprocess
 from time import sleep
 from collections import Counter
+import pickle
 
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
 
 def load_data(path=USERS_FILE, format="json"):
@@ -257,3 +259,49 @@ def convert_to_single_label(row):
     ind = np.argwhere(new_row.values)[0][0]
     new_row[ind + 1 :] = 0
     return new_row
+
+
+def preprocess(df, labels, include_unlabeled=False, multi_label=False, test_size=0.2):
+    feats = pickle.load(open(FEATURE_NAMES_FILE, "rb"))
+
+    if include_unlabeled:
+        common_indices = list(set(labels.index).intersection(df.index))
+        indices = list(df.index)
+        unlabeled_indices = list(set(indices).difference(common_indices))
+
+        df = df.loc[indices]
+        labels = labels.loc[common_indices]
+        labels = pd.concat([labels, pd.DataFrame(0, index=unlabeled_indices, columns=labels.columns)], axis=0)
+        labels['_None'] = 0
+        labels.loc[unlabeled_indices, '_None'] = 1
+
+    else:
+        indices = list(set(labels.index).intersection(df.index))
+        df = df.loc[indices]
+        labels = labels.loc[indices]
+
+    features = df[feats]
+
+    if multi_label:
+        raise NotImplementedError("Multi label is not implemented yet.")
+    else:
+        labels = labels.apply(convert_to_single_label, axis=1)
+        labels = labels.idxmax(axis=1)
+        X_train, X_test, y_train, y_test = train_test_split(
+            features, labels, stratify=labels, test_size=test_size, random_state=42
+        )
+
+        return X_train, X_test, y_train, y_test
+
+
+def load_all_data():
+    users = load_data(format="pandas")
+    features = load_data(USER_FEATURES_FILE, format="pandas")
+    relations = load_data(USER_RELATIONS_FILE, format="pandas")
+    labels = load_data(USER_LABELS_FILE, format="pandas")
+
+    users = users.set_index("login")
+    features = features.set_index("username")
+    labels = labels.set_index("login")
+
+    return users, features, relations, labels

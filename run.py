@@ -1,6 +1,7 @@
 import config as cfg
-from utils import load_data
+from utils import load_all_data
 from models import models_dict
+from logger import logger
 
 import argparse
 import numpy as np
@@ -13,28 +14,41 @@ def parse_args():
         type=str,
         choices=[
             "NaiveBayes",
-            "LogisticRegression"
+            "LogisticRegression",
+            "GCN",
+            "GraphSAGE"
         ],
         default="NaiveBayes",
     ),
+    parser.add_argument(
+        "--lr-max-iter",
+        type=int,
+        default=500,
+    ),
+    parser.add_argument(
+        "--lr",
+        type=float,
+        default=0.001,
+    ),
+    parser.add_argument(
+        "--h-feats",
+        type=int,
+        default=400
+    ),
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=500,
+    ),
+    parser.add_argument(
+        "--undirected",
+        action='store_true'
+    )
+
     return parser.parse_args()
-
-def load_all_data():
-    users = load_data(format='pandas')
-    features = load_data(cfg.USER_FEATURES_FILE, format='pandas')
-    relations = load_data(cfg.USER_RELATIONS_FILE, format='pandas')
-    labels = load_data(cfg.USER_LABELS_FILE, format='pandas')
-
-    users = users.set_index('login')
-    features = features.set_index('username')
-    labels = labels.set_index('login')
-
-
-
-    return users, features, relations, labels
-
 
 if __name__ == '__main__':
     args = parse_args()
     users, features, relations, labels = load_all_data()
-    models_dict[args.model](features, labels)
+    logger.info(args.__dict__)
+    models_dict[args.model](features, labels, relations, **args.__dict__)
