@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument(
         "--h-feats",
         type=int,
-        default=400
+        default=None
     ),
     parser.add_argument(
         "--epochs",

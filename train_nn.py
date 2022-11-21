@@ -40,6 +40,7 @@ class GraphSAGE(nn.Module):
 def train_gnn(g, model, lr=0.001, epochs=500):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     best_test_acc = 0
+    best_test_f1 = 0
 
     features = g.ndata["feat"]
     labels = g.ndata["label"]
@@ -67,13 +68,16 @@ def train_gnn(g, model, lr=0.001, epochs=500):
         if best_test_acc < test_acc:
             best_test_acc = test_acc
 
+        if best_test_f1 < test_f1:
+            best_test_f1 = test_f1
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         if e % 5 == 0:
             logger.info(
-                "In epoch {}, loss: {:.3f}, train_acc: {:.3f}, test acc: {:.3f} (best {:.3f}), train_f1: {:.3f}, test_f1: {:.3f}".format(
-                    e, loss, train_acc, test_acc, best_test_acc, train_f1, test_f1
+                "In epoch {}, loss: {:.3f}, train_acc: {:.3f}, test acc: {:.3f} (best {:.3f}), train_f1: {:.3f}, test_f1: {:.3f} (best: {:.3f})".format(
+                    e, loss, train_acc, test_acc, best_test_acc, train_f1, test_f1, best_test_f1
                 )
             )

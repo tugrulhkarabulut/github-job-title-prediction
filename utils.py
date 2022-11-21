@@ -280,7 +280,8 @@ def preprocess(df, labels, include_unlabeled=False, multi_label=False, test_size
         df = df.loc[indices]
         labels = labels.loc[indices]
 
-    features = df[feats]
+    features = df[feats].sort_index()
+    labels = labels.sort_index()
 
     if multi_label:
         raise NotImplementedError("Multi label is not implemented yet.")

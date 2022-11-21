@@ -4,15 +4,17 @@ from graph_data import GithubDataset
 from train_nn import GCN, GraphSAGE, train_gnn
 from logger import logger
 
+import numpy as np
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 
 
 def _naive_bayes(df, labels, relations, **args):
+    logger.info(f'#examples: {df.shape[0]}')
     clf = MultinomialNB()
     X_train, X_test, y_train, y_test = preprocess(df, labels)
-
+    logger.info(f'#train: {X_train.shape[0]}, #test: {X_test.shape[0]}')
     clf.fit(X_train, y_train)
     y_pred_train = clf.predict(X_train)
     y_pred_test = clf.predict(X_test)
@@ -32,9 +34,10 @@ def _naive_bayes(df, labels, relations, **args):
 
 
 def _logistic_regression(df, labels, relations, **args):
+    logger.info(f'#examples: {df.shape[0]}')
     clf = LogisticRegression(max_iter=args['lr_max_iter'])
     X_train, X_test, y_train, y_test = preprocess(df, labels)
-
+    logger.info(f'#train: {X_train.shape[0]}, #test: {X_test.shape[0]}')
     clf.fit(X_train, y_train)
     y_pred_train = clf.predict(X_train)
     y_pred_test = clf.predict(X_test)
@@ -56,6 +59,7 @@ def _logistic_regression(df, labels, relations, **args):
 def _gcn(df, labels, relations, **args):
     dataset = GithubDataset(undirected=args['undirected'])
     graph = dataset[0]
+    logger.info(f'#nodes: {graph.num_nodes()}, #edges: {graph.num_edges()}')
     graph = graph.add_self_loop()
 
     model = GCN(graph.ndata['feat'].shape[1], args['h_feats'], dataset.num_classes)
@@ -65,6 +69,7 @@ def _gcn(df, labels, relations, **args):
 def _graph_sage(df, labels, relations, **args):
     dataset = GithubDataset(undirected=args['undirected'])
     graph = dataset[0]
+    logger.info(f'#nodes: {graph.num_nodes()}, #edges: {graph.num_edges()}')
     graph = graph.add_self_loop()
     model = GraphSAGE(graph.ndata['feat'].shape[1], args['h_feats'], dataset.num_classes)
     train_gnn(graph, model, lr=args['lr'], epochs=args['epochs'])
