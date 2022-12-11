@@ -1,10 +1,9 @@
 import config as cfg
 from utils import load_all_data
-from models import models_dict
+from models import run_pipeline
 from logger import logger
 
 import argparse
-import numpy as np
 
 
 def parse_args():
@@ -44,6 +43,27 @@ def parse_args():
         "--undirected",
         action='store_true'
     )
+    parser.add_argument(
+        "--feature-selection",
+        choices=[None, "variance", "select_from_model"]
+    )
+    parser.add_argument(
+        "--variance-threshold",
+        type=float,
+        default=1e-3
+    )
+    parser.add_argument(
+        "--select-from",
+        type=str,
+        default="svc",
+        choices=["svc", "extra_trees"]
+    )
+    parser.add_argument(
+        "--n-splits",
+        type=int,
+        default=1,
+        choices=[1,5]
+    )
 
     return parser.parse_args()
 
@@ -51,4 +71,4 @@ if __name__ == '__main__':
     args = parse_args()
     users, features, relations, labels = load_all_data()
     logger.info(args.__dict__)
-    models_dict[args.model](features, labels, relations, **args.__dict__)
+    run_pipeline(features, labels, relations, **args.__dict__)

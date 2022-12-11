@@ -9,7 +9,7 @@ import pickle
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
 
 
 def load_data(path=USERS_FILE, format="json"):
@@ -261,26 +261,21 @@ def convert_to_single_label(row):
     return new_row
 
 
-def preprocess(df, labels, include_unlabeled=False, multi_label=False, test_size=0.2):
-    feats = pickle.load(open(FEATURE_NAMES_FILE, "rb"))
+def preprocess(
+    df,
+    labels,
+    include_unlabeled=False,
+    multi_label=False,
+    test_size=0.2,
+    n_splits=1
+):
+    feats = list(df.columns)
 
-    if include_unlabeled:
-        common_indices = list(set(labels.index).intersection(df.index))
-        indices = list(df.index)
-        unlabeled_indices = list(set(indices).difference(common_indices))
+    indices = list(set(labels.index).intersection(df.index))
+    df_labeled = df.loc[indices]
+    labels = labels.loc[indices]
 
-        df = df.loc[indices]
-        labels = labels.loc[common_indices]
-        labels = pd.concat([labels, pd.DataFrame(0, index=unlabeled_indices, columns=labels.columns)], axis=0)
-        labels['_None'] = 0
-        labels.loc[unlabeled_indices, '_None'] = 1
-
-    else:
-        indices = list(set(labels.index).intersection(df.index))
-        df = df.loc[indices]
-        labels = labels.loc[indices]
-
-    features = df[feats].sort_index()
+    features = df_labeled[feats].sort_index()
     labels = labels.sort_index()
 
     if multi_label:
@@ -288,11 +283,31 @@ def preprocess(df, labels, include_unlabeled=False, multi_label=False, test_size
     else:
         labels = labels.apply(convert_to_single_label, axis=1)
         labels = labels.idxmax(axis=1)
-        X_train, X_test, y_train, y_test = train_test_split(
-            features, labels, stratify=labels, test_size=test_size, random_state=42
-        )
+        X_train, X_test, y_train, y_test = [], [], [], []
+        if n_splits > 1:
+            kf = KFold(n_splits=n_splits, shuffle=True)
+            for train_index, test_index in kf.split(features, labels):
+                X_train.append(df.iloc[train_index])
+                X_test.append(df.iloc[test_index])
+                y_train.append(labels.iloc[train_index])
+                y_test.append(labels.iloc[test_index])
 
-        return X_train, X_test, y_train, y_test
+        else:
+            X_tr, X_te, y_tr, y_te = train_test_split(
+                features, labels, stratify=labels, test_size=test_size, random_state=42
+            )
+            X_train.append(X_tr)
+            X_test.append(X_te)
+            y_train.append(y_tr)
+            y_test.append(y_te)
+
+    if include_unlabeled:
+        unlabeled_indices = list(set(df.index).difference(indices))
+        df_unlabeled = df.loc[unlabeled_indices]
+        X_unlabeled = df_unlabeled[feats]
+        return X_train, X_test, y_train, y_test, X_unlabeled
+    else:
+        return X_train, X_test, y_train, y_test, None
 
 
 def load_all_data():
