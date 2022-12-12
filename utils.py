@@ -287,10 +287,10 @@ def preprocess(
         if n_splits > 1:
             kf = KFold(n_splits=n_splits, shuffle=True)
             for train_index, test_index in kf.split(features, labels):
-                X_train.append(df.iloc[train_index])
-                X_test.append(df.iloc[test_index])
-                y_train.append(labels.iloc[train_index])
-                y_test.append(labels.iloc[test_index])
+                X_train.append(features.iloc[train_index].copy())
+                X_test.append(features.iloc[test_index].copy())
+                y_train.append(labels.iloc[train_index].copy())
+                y_test.append(labels.iloc[test_index].copy())
 
         else:
             X_tr, X_te, y_tr, y_te = train_test_split(

@@ -97,7 +97,7 @@ def _graph_sage(graph, dataset, **args):
     model = GraphSAGE(
         graph.ndata["feat"].shape[1], args["h_feats"], dataset.num_classes
     )
-    train_gnn(graph, model, lr=args["lr"], epochs=args["epochs"])
+    train_gnn(graph, model, lr=args["lr"], epochs=args["epochs"], patience=args['patience'])
     return model
 
 
@@ -121,6 +121,8 @@ def run_pipeline(df, labels, relations, **args):
         include_unlabeled=is_graph_model,
         n_splits=args['n_splits']
     )
+
+    test_scores = []
 
     for i, (X_train, X_test, y_train, y_test) in enumerate(
         zip(X_trains, X_tests, y_trains, y_tests)
@@ -161,7 +163,13 @@ def run_pipeline(df, labels, relations, **args):
             y_pred_train = model.predict(X_train)
             y_pred_test = model.predict(X_test)
 
-        evaluate(y_train, y_pred_train, y_test, y_pred_test)
+        train_acc, test_acc, train_f1, test_f1 = evaluate(y_train, y_pred_train, y_test, y_pred_test)
+        test_scores.append(test_f1)
+
+    test_scores = np.array(test_scores)
+    mean_test_score = np.round(test_scores.mean(), 3)
+    std_test_score = np.round(test_scores.std(), 3)
+    logger.info(f"\tMean F1: {mean_test_score}, Std F1: {std_test_score}")
 
 
 models_dict = {

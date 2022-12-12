@@ -40,6 +40,11 @@ def parse_args():
         default=500,
     ),
     parser.add_argument(
+        "--patience",
+        type=int,
+        default=50
+    )
+    parser.add_argument(
         "--undirected",
         action='store_true'
     )

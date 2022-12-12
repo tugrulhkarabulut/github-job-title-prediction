@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from logger import logger
 
 
@@ -37,10 +39,12 @@ class GraphSAGE(nn.Module):
         return h
 
 
-def train_gnn(g, model, lr=0.001, epochs=500):
+def train_gnn(g, model, lr=0.001, epochs=500, patience=50):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     best_test_acc = 0
     best_test_f1 = 0
+    best_state = model.state_dict()
+    curr_patience = 0
 
     features = g.ndata["feat"]
     labels = g.ndata["label"]
@@ -70,6 +74,13 @@ def train_gnn(g, model, lr=0.001, epochs=500):
 
         if best_test_f1 < test_f1:
             best_test_f1 = test_f1
+            best_state = deepcopy(model.state_dict())
+            curr_patience = 0
+        else:
+            curr_patience += 1
+
+        if curr_patience > patience:
+            break
 
         optimizer.zero_grad()
         loss.backward()
@@ -88,3 +99,5 @@ def train_gnn(g, model, lr=0.001, epochs=500):
                     best_test_f1,
                 )
             )
+
+    model.load_state_dict(best_state)
