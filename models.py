@@ -132,22 +132,26 @@ def run_pipeline(df, labels, relations, **args):
         )
 
         X_train, feature_selector = feature_selection(X_train, y_train, args)
+        if X_unlabeled is not None:
+            X_unlabeled_ = X_unlabeled.copy()
+        
         if feature_selector is not None:
             X_test = pd.DataFrame(
                 feature_selector.transform(X_test),
                 index=X_test.index,
                 columns=feature_selector.get_feature_names_out(),
             )
-            X_unlabeled = pd.DataFrame(
-                feature_selector.transform(X_unlabeled),
-                index=X_unlabeled.index,
-                columns=feature_selector.get_feature_names_out(),
-            )
+            if X_unlabeled is not None:
+                X_unlabeled_ = pd.DataFrame(
+                    feature_selector.transform(X_unlabeled),
+                    index=X_unlabeled.index,
+                    columns=feature_selector.get_feature_names_out(),
+                )
             logger.info(f"After feature selection: {X_train.shape[1]} features.")
 
         if is_graph_model:
             dataset, graph = build_graph(
-                X_train, X_test, y_train, y_test, X_unlabeled, relations, args
+                X_train, X_test, y_train, y_test, X_unlabeled_, relations, args
             )
             model = train_graph_model(graph, dataset, args)
             model.eval()
@@ -170,6 +174,7 @@ def run_pipeline(df, labels, relations, **args):
     mean_test_score = np.round(test_scores.mean(), 3)
     std_test_score = np.round(test_scores.std(), 3)
     logger.info(f"\tMean F1: {mean_test_score}, Std F1: {std_test_score}")
+    return mean_test_score, std_test_score
 
 
 models_dict = {

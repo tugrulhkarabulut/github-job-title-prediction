@@ -1,5 +1,5 @@
 import config as cfg
-from utils import load_all_data
+from utils import load_all_data, update_experiments
 from models import run_pipeline
 from logger import logger
 
@@ -66,7 +66,7 @@ def parse_args():
     parser.add_argument(
         "--n-splits",
         type=int,
-        default=1,
+        default=5,
         choices=[1,5]
     )
 
@@ -76,4 +76,8 @@ if __name__ == '__main__':
     args = parse_args()
     users, features, relations, labels = load_all_data()
     logger.info(args.__dict__)
-    run_pipeline(features, labels, relations, **args.__dict__)
+    mean_test_score, std_test_score = run_pipeline(features, labels, relations, **args.__dict__)
+    exp_data = args.__dict__.copy()
+    exp_data['mean_test_score'] = mean_test_score
+    exp_data['std_test_score'] = std_test_score
+    update_experiments(exp_data)

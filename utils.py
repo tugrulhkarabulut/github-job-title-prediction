@@ -5,6 +5,8 @@ import subprocess
 from time import sleep
 from collections import Counter
 import pickle
+import os
+from datetime import datetime
 
 import numpy as np
 from tqdm import tqdm
@@ -321,3 +323,17 @@ def load_all_data():
     labels = labels.set_index("login")
 
     return users, features, relations, labels
+
+def update_experiments(data):
+    data['timestamp'] = datetime.now()
+
+    if os.path.exists('experiments.csv'):
+        exps = pd.read_csv('experiments.csv')
+        data['id'] = exps['id'].max() + 1
+    else:
+        data['id'] = 1
+        exps = pd.DataFrame(columns=data.keys())
+
+    row = pd.DataFrame(data, index=[0])
+    exps = pd.concat([exps, row])
+    exps.to_csv('experiments.csv', index=False)
