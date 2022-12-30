@@ -73,6 +73,24 @@ def feature_selection(X_train, y_train, args):
     return X_train, None
 
 
+def extract_neighborhood_features(df, relations, agg_func):
+    relations_renamed = relations.rename(columns={"following": "from", "follow": "to"})
+    relations_renamed_reversed = pd.DataFrame()
+    relations_renamed_reversed["from"] = relations_renamed["to"].copy()
+    relations_renamed_reversed["to"] = relations_renamed["from"].copy()
+    relations_undirected = pd.concat([relations_renamed, relations_renamed_reversed])
+
+    merged = relations_undirected.merge(
+        df.reset_index(), left_on="to", right_on="username"
+    )
+    del merged['to']
+    del merged['username']
+    merged = merged.groupby("from")
+    merged = getattr(merged, agg_func)()
+    merged = merged.add_prefix("Neighbor_")
+    return merged
+
+
 def _naive_bayes(X_train, y_train, **args):
     clf = MultinomialNB()
     clf.fit(X_train, y_train)
@@ -97,7 +115,9 @@ def _graph_sage(graph, dataset, **args):
     model = GraphSAGE(
         graph.ndata["feat"].shape[1], args["h_feats"], dataset.num_classes
     )
-    train_gnn(graph, model, lr=args["lr"], epochs=args["epochs"], patience=args['patience'])
+    train_gnn(
+        graph, model, lr=args["lr"], epochs=args["epochs"], patience=args["patience"]
+    )
     return model
 
 
@@ -115,11 +135,16 @@ def run_pipeline(df, labels, relations, **args):
     logger.info(f"examples: {df.shape[0]}, features: {df.shape[1]}")
 
     is_graph_model = True if args["model"] in ["GCN", "GraphSAGE"] else False
+
+    if not is_graph_model:
+        df = df.merge(
+            extract_neighborhood_features(df, relations, args['neighborhood_features']),
+            left_index=True,
+            right_index=True,
+        )
+
     X_trains, X_tests, y_trains, y_tests, X_unlabeled = preprocess(
-        df,
-        labels,
-        include_unlabeled=is_graph_model,
-        n_splits=args['n_splits']
+        df, labels, include_unlabeled=is_graph_model, n_splits=args["n_splits"]
     )
 
     test_scores = []
@@ -127,14 +152,12 @@ def run_pipeline(df, labels, relations, **args):
     for i, (X_train, X_test, y_train, y_test) in enumerate(
         zip(X_trains, X_tests, y_trains, y_tests)
     ):
-        logger.info(
-            f"split {i+1}: train: {X_train.shape[0]}, test: {X_test.shape[0]}"
-        )
+        logger.info(f"split {i+1}: train: {X_train.shape[0]}, test: {X_test.shape[0]}")
 
         X_train, feature_selector = feature_selection(X_train, y_train, args)
         if X_unlabeled is not None:
             X_unlabeled_ = X_unlabeled.copy()
-        
+
         if feature_selector is not None:
             X_test = pd.DataFrame(
                 feature_selector.transform(X_test),
@@ -167,7 +190,9 @@ def run_pipeline(df, labels, relations, **args):
             y_pred_train = model.predict(X_train)
             y_pred_test = model.predict(X_test)
 
-        train_acc, test_acc, train_f1, test_f1 = evaluate(y_train, y_pred_train, y_test, y_pred_test)
+        train_acc, test_acc, train_f1, test_f1 = evaluate(
+            y_train, y_pred_train, y_test, y_pred_test
+        )
         test_scores.append(test_f1)
 
     test_scores = np.array(test_scores)
