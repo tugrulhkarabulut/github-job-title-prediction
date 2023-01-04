@@ -94,8 +94,5 @@ if __name__ == '__main__':
     args = parse_args()
     users, features, relations, labels = load_all_data()
     logger.info(args.__dict__)
-    mean_test_score, std_test_score = run_pipeline(features, labels, relations, **args.__dict__)
-    exp_data = args.__dict__.copy()
-    exp_data['mean_test_score'] = mean_test_score
-    exp_data['std_test_score'] = std_test_score
+    exp_data = run_pipeline(features, labels, relations, **args.__dict__)
     update_experiments(exp_data)

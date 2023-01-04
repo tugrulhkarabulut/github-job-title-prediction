@@ -199,7 +199,14 @@ def run_pipeline(df, labels, relations, **args):
     mean_test_score = np.round(test_scores.mean(), 3)
     std_test_score = np.round(test_scores.std(), 3)
     logger.info(f"\tMean F1: {mean_test_score}, Std F1: {std_test_score}")
-    return mean_test_score, std_test_score
+
+    exp_data = args.copy()
+    exp_data['mean_test_score'] = mean_test_score
+    exp_data['std_test_score'] = std_test_score
+    if args["feature_selection"]:
+        exp_data["selected_features"] = '; '.join(feature_selector.get_feature_names_out())
+
+    return exp_data
 
 
 models_dict = {
