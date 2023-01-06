@@ -1,6 +1,6 @@
 # Job Title Prediction of Github Users
 
-This repository contains implementations for a machine learning pipeilne to predict job titles of github users. Both classical ML models and graph deep learning models are available. [Github Social Network](https://snap.stanford.edu/data/github-social.html) is used as the reference dataset for user subset but a new set of features related to user's repositories, companies and descriptive statistics are extracted.
+This repository contains implementations for a machine learning pipeilne to predict job titles of github users. Both classical ML models and graph deep learning models are available. [Github Social Network](https://snap.stanford.edu/data/github-social.html) is used as the reference dataset for the user subset but a new set of features related to user's repositories, company and descriptive statistics are extracted.
 
 # Setup
 
@@ -14,6 +14,12 @@ You need to download the Github Social Network. To be able to make requests to G
 - DGL
 
 # How to Run
+
+Get authenticated in Github with:
+
+```bash
+gh auth login
+```
 
 ## Getting the Data
 
