@@ -86,4 +86,4 @@ options:
 | \#4 GCN                 | 0.758 ± 0.006          |
 
 ### Run Experiments
-Run experiments.sh to reproduce the results of the experiments in this study.
+Run experiment.sh to reproduce the results of the experiments in this study.
